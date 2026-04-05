@@ -127,3 +127,30 @@ def test_main_copies_to_clipboard():
                 main()
 
                 mock_copy.assert_called_once_with("feat: test")
+
+
+def test_generate_commit_message_prompt_structure():
+    with patch("git_commit_generator.client") as mock_client:
+        mock_create = MagicMock()
+        mock_create.return_value = MagicMock(
+            choices=[MagicMock(message=MagicMock(content="feat: test"))]
+        )
+
+        mock_client.chat.completions.create = mock_create
+
+        generate_commit_message("some diff")
+
+        _, kwargs = mock_create.call_args
+        messages = kwargs["messages"]
+
+        # System message
+        assert messages[0]["role"] == "system"
+        assert "expert software engineer" in messages[0]["content"]
+
+        # User message
+        assert messages[1]["role"] == "user"
+        assert "Diff:" in messages[1]["content"]
+        assert "some diff" in messages[1]["content"]
+
+        # Ensure key rules are still present
+        assert "conventional commit" in messages[1]["content"]
