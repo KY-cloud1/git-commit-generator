@@ -39,6 +39,8 @@ def generate_commit_message(diff):
 
     Returns the generated message as a string, or None on failure.
     """
+    # Point the OpenAI client at our local llama-server instead
+    # of OpenAI's API.
     client = OpenAI(base_url=BASE_URL, api_key="not-needed")
 
     try:
@@ -54,12 +56,20 @@ def generate_commit_message(diff):
                 {
                     "role": "user",
                     "content": (
-                        "Write a concise git commit message based on the following diff.\n\n"
+                        "Write a concise git commit message based "
+                        "on the following diff.\n\n"
+                        "Rules:\n"
+                        "- Use conventional commit style "
+                        "(feat, fix, refactor, chore, etc.)\n"
+                        "- Title aimed for 50 characters and must "
+                        "be under 72 characters\n"
+                        "- Optionally include a short body if useful.\n"
+                        "- Body lines must each be under 72 characters\n\n"
                         f"Diff:\n{diff}"
                     ),
                 },
             ],
-            timeout=45,
+            timeout=45,  # seconds
         )
         return response.choices[0].message.content
 
