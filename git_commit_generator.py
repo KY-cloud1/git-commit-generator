@@ -13,12 +13,19 @@ BASE_URL = "http://127.0.0.1:8080/v1"
 
 
 def get_staged_diff():
+    """
+    Return the current git staged diff as a string.
+
+    Runs `git diff --staged` to get only changes that have been
+    added with `git add`.
+    """
     result = subprocess.run(
         ["git", "diff", "--staged", "--unified=3"],
         capture_output=True,
         text=True,
     )
     diff = result.stdout
+    
     return diff
 
 
@@ -38,10 +45,12 @@ def generate_commit_message(diff):
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
+                # System message sets the persona and behavior.
                 {
                     "role": "system",
                     "content": "You are an expert software engineer.",
                 },
+                # System message sets the persona and behavior.
                 {
                     "role": "user",
                     "content": (
@@ -57,3 +66,26 @@ def generate_commit_message(diff):
     except Exception as e:
         print(f"Error: {type(e).__name__} - {e}")
         return None
+
+
+def main():
+    # Get the diff of everything currently staged with `git add`.
+    diff = get_staged_diff()
+
+    # Nothing staged — no point sending an empty diff.
+    if not diff.strip():
+        print("No staged changes found.")
+        return
+
+    message = generate_commit_message(diff)
+
+    if message is None:
+        print("Failed to generate commit message.")
+        return
+
+    print("\nSuggested commit message:\n")
+    print(message)
+
+
+if __name__ == "__main__":
+    main()

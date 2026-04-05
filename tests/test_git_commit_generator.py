@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock, patch
-from main import get_staged_diff, generate_commit_message
+from main import get_staged_diff, generate_commit_message, main
 
 
 def test_get_staged_diff_returns_stdout():
@@ -77,3 +77,29 @@ def test_generate_commit_message_exception():
         result = generate_commit_message("diff")
 
         assert result is None
+
+
+def test_main_with_no_staged_changes():
+    with patch("main.get_staged_diff", return_value=""):
+        with patch("builtins.print") as mock_print:
+            main()
+            mock_print.assert_called_with("No staged changes found.")
+
+
+def test_main_with_success():
+    with patch("main.get_staged_diff", return_value="diff"):
+        with patch("main.generate_commit_message", return_value="feat: add feature"):
+            with patch("builtins.print") as mock_print:
+                main()
+
+                mock_print.assert_any_call("\nSuggested commit message:\n")
+                mock_print.assert_any_call("feat: add feature")
+
+
+def test_main_with_failure():
+    with patch("main.get_staged_diff", return_value="diff"):
+        with patch("main.generate_commit_message", return_value=None):
+            with patch("builtins.print") as mock_print:
+                main()
+
+                mock_print.assert_any_call("Failed to generate commit message.")
