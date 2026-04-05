@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock, patch
-from main import get_staged_diff
+from main import get_staged_diff, generate_commit_message, BASE_URL, MODEL_NAME
 
 
 def test_get_staged_diff_returns_stdout():
@@ -33,3 +33,19 @@ def test_get_staged_diff_handles_empty_output():
         result = get_staged_diff()
 
         assert result == ""
+
+
+def test_generate_commit_message_success():
+    expected_message = "feat: add feature"
+
+    with patch("main.OpenAI") as mock_openai:
+        mock_client = MagicMock()
+        mock_openai.return_value = mock_client
+
+        mock_client.chat.completions.create.return_value = MagicMock(
+            choices=[MagicMock(message=MagicMock(content=expected_message))]
+        )
+
+        result = generate_commit_message("diff")
+
+        assert result == expected_message
