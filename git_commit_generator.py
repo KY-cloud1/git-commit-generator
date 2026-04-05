@@ -13,18 +13,13 @@ BASE_URL = "http://127.0.0.1:8080/v1"
 
 
 def get_staged_diff():
-    """
-    Return the current git staged diff as a string.
-
-    Runs `git diff --staged` to get only changes that have been
-    added with `git add`.
-    """
     result = subprocess.run(
         ["git", "diff", "--staged", "--unified=3"],
         capture_output=True,
         text=True,
     )
-    return result.stdout
+    diff = result.stdout
+    return diff
 
 
 def generate_commit_message(diff):
@@ -48,7 +43,10 @@ def generate_commit_message(diff):
             },
             {
                 "role": "user",
-                "content": diff,
+                "content": (
+                    "Write a concise git commit message based on the following diff.\n\n"
+                    f"Diff:\n{diff}"
+                ),
             },
         ],
     )
